@@ -1,6 +1,7 @@
 import os
 import pikepdf
 from pikepdf import Pdf, OutlineItem
+import chardet
 
 
 class PDFHandler(object):
@@ -39,28 +40,34 @@ class PDFHandler(object):
             bookmarks: list. The bookmarks list of the PDF file. Every item in the list is a triple with format `(structure, title, page)`. The `structure` represents the structure hierarchy of bookmarks. It has three values, one, two and three, representing the first layer of bookmarks, the second layer of bookmarks and the third layer of bookmarks.
         """
         bookmarks = list()
-        with open(file_path, 'r') as file:
-            for line in file:
-                line = line.rstrip()
-                if not line:
-                    continue
-                # use '@' as a separator for bookmarks and page numbers
-                try:
-                    title = line.split('@')[0].rstrip()
-                    page = line.split('@')[1].strip()
-                except IndexError as msg:
-                    print(msg)
-                    continue
-                # add bookmark if title and page are not empty
-                if title and page:
+        # identify the encoding of bookmarks file
+        encode = identify_encoding(file_path)
+        # open bookmarks file with possible encoding
+        try:
+            with open(file_path, 'r', encoding=encode) as file:
+                for line in file:
+                    line = line.rstrip()
+                    if not line:
+                        continue
+                    # use '@' as a separator for bookmarks and page numbers
                     try:
-                        page = int(page) + page_offset
-                        # get the structure hierarchy of bookmarks by counting tab keys
-                        structure = title.count('#')
-                        title = title.replace('#', '').lstrip()
-                        bookmarks.append((structure, title, page))
-                    except ValueError as msg:
+                        title = line.split('@')[0].rstrip()
+                        page = line.split('@')[1].strip()
+                    except IndexError as msg:
                         print(msg)
+                        continue
+                    # add bookmark if title and page are not empty
+                    if title and page:
+                        try:
+                            page = int(page) + page_offset
+                            # get the structure hierarchy of bookmarks by counting tab keys
+                            structure = title.count('#')
+                            title = title.replace('#', '').lstrip()
+                            bookmarks.append((structure, title, page))
+                        except ValueError as msg:
+                            print(msg)
+        except UnicodeDecodeError as msg:
+            print(msg)
             
         return bookmarks
 
@@ -113,3 +120,17 @@ class PDFHandler(object):
         """
         path = os.path.join(file_path, f"{self.file_name}_addbookmarks.pdf")
         self.__writable.save(path)
+
+        
+def identify_encoding(file_path: str) -> str:
+    """ Identify the encoding of the given file by chardet package.
+    
+    Args:
+        file_path: path of the given file to be identified.
+        
+    Returns:
+        encoding: possible encoding of the given file.
+    """
+    with open(file_path, mode='rb') as f:
+        result_dict = chardet.detect(f.read())
+        return result_dict['encoding']
