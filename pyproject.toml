@@ -1,0 +1,20 @@
+[tool.poetry]
+name = "addpdfbookmarks"
+version = "0.1.0"
+description = ""
+authors = ["Runfeng Tsui <runfengtsui@outlook.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.10"
+chardet = "^5.1.0"
+pikepdf = "^7.1.2"
+
+[[tool.poetry.source]]
+name = "Tsinghua"
+url = "https://pypi.tuna.tsinghua.edu.cn/simple"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
